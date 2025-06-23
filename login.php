@@ -23,6 +23,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['user_id'] = $user['user_id'];
             $_SESSION['user_name'] = $user['name'];
             $_SESSION['user_category'] = $user['category'];
+
+            // Redirect based on category
+            if ($user['category'] === 'Admin') {
+                header('Location: admin/admin_dashboard.php');
+            } else {
+                header('Location: dashboard.php');
+            }
+            exit;
         } else {
             $error = "Incorrect password.";
         }
