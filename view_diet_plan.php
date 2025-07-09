@@ -10,50 +10,50 @@ if (!isset($_SESSION['user_id'])) {
 
 include('includes/header.php');
 
-// Fetch user's body mass category from session
-$body_mass_category = $_SESSION['user_category'];
+$user_id = $_SESSION['user_id'];
+$user_name = $_SESSION['user_name'] ?? 'User';
 
-// Define diet plans
-$diet_plans = [
-    'Obese' => [
-        'Breakfast' => 'Oatmeal with fresh fruit',
-        'Lunch' => 'Grilled chicken salad with olive oil dressing',
-        'Dinner' => 'Steamed vegetables with baked salmon',
-        'Snacks' => 'Carrot sticks or an apple',
-    ],
-    'Normal' => [
-        'Breakfast' => 'Eggs with whole-grain toast and avocado',
-        'Lunch' => 'Grilled turkey sandwich with a side of vegetables',
-        'Dinner' => 'Stir-fried tofu with brown rice',
-        'Snacks' => 'Mixed nuts or yogurt',
-    ],
-    'Slender' => [
-        'Breakfast' => 'Pancakes with peanut butter and banana slices',
-        'Lunch' => 'Pasta with lean ground beef and tomato sauce',
-        'Dinner' => 'Roast chicken with mashed potatoes and green beans',
-        'Snacks' => 'Smoothies or protein bars',
-    ],
-];
+// Get current day and time
+date_default_timezone_set('Africa/Lagos'); // Adjust to your timezone
+$current_day = date('l'); // e.g., Monday
+$current_hour = date('H');
 
-// Get the specific diet plan for the user
-$diet_plan = $diet_plans[$body_mass_category];
+// Determine the current meal period
+if ($current_hour < 11) {
+    $meal_time = 'Breakfast';
+} elseif ($current_hour < 16) {
+    $meal_time = 'Lunch';
+} else {
+    $meal_time = 'Dinner';
+}
+
+// Fetch today’s meal from meal_calendar
+$stmt = $conn->prepare("SELECT breakfast, lunch, dinner FROM meal_calendar WHERE user_id = ? AND day = ?");
+$stmt->bind_param("is", $user_id, $current_day);
+$stmt->execute();
+$result = $stmt->get_result();
+$meal_row = $result->fetch_assoc();
 ?>
 
 <div class="container mt-5">
-    <h2 class="text-center">Your Personalized Diet Plan</h2>
-    <p class="text-center">Tailored for your category: <strong><?= htmlspecialchars($body_mass_category); ?></strong></p>
+    <h2 class="text-center">Hi <?= htmlspecialchars($user_name); ?>, Here's Your Meal for Today</h2>
+    <p class="text-center">Today is <strong><?= $current_day; ?></strong> and it's <strong><?= $meal_time; ?></strong> time.</p>
 
-    <div class="row mt-4">
-        <?php foreach ($diet_plan as $meal => $menu) : ?>
-            <div class="col-md-6">
-                <div class="card mb-3">
-                    <div class="card-header bg-primary text-white"><?= htmlspecialchars($meal); ?></div>
-                    <div class="card-body">
-                        <p><?= htmlspecialchars($menu); ?></p>
-                    </div>
+    <div class="row justify-content-center mt-4">
+        <div class="col-md-6">
+            <div class="card text-center">
+                <div class="card-header bg-success text-white">
+                    <?= $meal_time; ?>
+                </div>
+                <div class="card-body">
+                    <p>
+                        <?= isset($meal_row[$meal_time = strtolower($meal_time)]) && $meal_row[$meal_time] 
+                            ? htmlspecialchars($meal_row[$meal_time])
+                            : "<em>No meal planned yet for this time.</em>"; ?>
+                    </p>
                 </div>
             </div>
-        <?php endforeach; ?>
+        </div>
     </div>
 </div>
 
